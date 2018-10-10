@@ -22,6 +22,17 @@ var exists = fs.existsSync(dbFile);
 var sqlite3 = require("sqlite3").verbose();
 var db = new sqlite3.Database(dbFile);
 
+const createUsersMigration = () => {
+  db.serialize(function() {
+    db.run(
+      "CREATE TABLE IF NOT EXISTS users (email STRING NOT NULL UNIQUE, coffee_days STRING NOT NULL);"
+    );
+    db.serialize(function() {
+      db.run("CREATE INDEX IF NOT EXISTS users_email_index ON users (email);");
+    });
+  });
+};
+
 // if ./.data/sqlite.db does not exist, create it, otherwise print records to console
 db.serialize(function() {
   if (!exists) {
@@ -38,9 +49,35 @@ db.serialize(function() {
       console.log('New table "matches" created!');
     });
   } else {
+    createUsersMigration();
     console.log('Database "matches" ready to go!');
   }
 });
+
+const getTodaysEmails = async ({ emails }) => {
+  const userConfigs = await new Promise((resolve, reject) => {
+    db.all(
+      `SELECT email, coffee_days
+            FROM users 
+            WHERE email in ("${emails.join('","')}")`,
+      [],
+      (err, rows) => (err ? reject(err) : resolve(rows))
+    );
+  });
+  
+  const userConfigMap = userConfigs.reduce((acc, v) => {
+    acc[v["email"]] = String(v["coffee_days"]);
+    return acc;
+  }, {});
+  const today = (new Date).getDay();
+  const isDefaultDay = process.env.DEFAULT_COFFEE_DAYS.includes(today)
+  return emails.filter(email => {
+    const config = userConfigMap[email];
+    if (!config && isDefaultDay) return true;
+    if (config && config.includes(today)) return true;
+    return false;
+  })
+}
 
 // set up Zulip JS library
 const zulipConfig = {
@@ -63,6 +100,8 @@ const getSubscribedEmails = async ({ zulipAPI, users }) => {
     );
   });
 };
+
+
 
 const getUserWithEmail = ({ users, email }) => {
   return users.find(user => user.email === email);
@@ -92,14 +131,18 @@ const matchEmails = async ({ emails }) => {
   while (unmatchedEmails.length > 0) {
     const currentEmail = unmatchedEmails.shift();
     const matchedEmails = pastMatches
-      .filter(match => match.email1 === currentEmail || match.email2 === currentEmail) // filter to current email's matches
+      .filter(
+        match => match.email1 === currentEmail || match.email2 === currentEmail
+      ) // filter to current email's matches
       .sort((a, b) => Number(new Date(a.date)) - Number(new Date(b.date))) // sort oldest to newest, so if there is a conflict we can rematch with oldest first
-      .map(match => (match.email1 === currentEmail ? match.email2 : match.email1)) // map matches to just other people's emails
+      .map(
+        match => (match.email1 === currentEmail ? match.email2 : match.email1)
+      ) // map matches to just other people's emails
       .filter((value, index, self) => self.indexOf(value) === index); // uniq emails // TODO: this should be a reduce that adds a match count to every email so we can factor that into matches
     const availableEmails = unmatchedEmails.filter(
       email => !matchedEmails.includes(email)
     );
-    // 
+    //
     if (availableEmails.length > 0) {
       // TODO: potentialy prioritize matching people from different batches
       newMatches.push([currentEmail, availableEmails[0]]);
@@ -126,7 +169,11 @@ const sendMessage = ({ zulipAPI, toEmail, matchedName }) => {
   zulipAPI.messages.send({
     to: toEmail,
     type: "private",
-    content: `Hi there! You're having coffee (or tea, or a walk, or whatever you fancy) with @**${matchedName}** today - enjoy!`
+    content: `Hi there! You're having coffee (or tea, or a walk, or whatever you fancy) with @**${matchedName}** today - enjoy! See [${
+      matchedName.split(" ")[0]
+    }'s profile](https://www.recurse.com/directory?q=${encodeURIComponent(
+      matchedName
+    )}) for more details.`
   });
 };
 
@@ -160,8 +207,9 @@ const run = async () => {
   const users = (await zulipAPI.users.retrieve()).members;
 
   const activeEmails = await getSubscribedEmails({ zulipAPI, users });
+  const todaysActiveEmails = await getTodaysEmails({ emails: activeEmails });
 
-  const matchedEmails = await matchEmails({ emails: activeEmails });
+  const matchedEmails = await matchEmails({ emails: todaysActiveEmails });
   sendAllMessages({ zulipAPI, matchedEmails, users });
 };
 
@@ -180,3 +228,13 @@ app.post("/cron/run", function(request, response) {
 const listener = app.listen(process.env.PORT, function() {
   console.log("Your app is listening on port " + listener.address().port);
 });
+
+// // util for testing messages
+// const test = async () => {
+//   // const zulipAPI = await zulip(zulipConfig);
+//   // sendMessage({ zulipAPI, toEmail: "<>", matchedName: "<>" });
+//   db.run('INSERT OR REPLACE INTO users(email, coffee_days) VALUES ("c", "3")');
+//   console.log(await getTodaysEmails({emails: ["c", "d"]}), (new Date("2018-10-07")).getDay());
+// };
+// test()
+
