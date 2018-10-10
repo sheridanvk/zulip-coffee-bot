@@ -26,9 +26,11 @@ This app has a database!
 
 RC-specific Messages
 --------------------
-Hi everyone! From tomorrow morning, we'll be kicking off coffee chat pairings. These are a great way to get matched with someone else at RC, to chat about anything and everything - from what you'll be doing at RC to what you're doing in life. Coffee isn't required - it could be tea, or snacks, or just a walk - and you don't even have to leave the building if you just want to catch up in the kitchen or somewhere else on the 4th floor.
+tl;dr: Subscribe yourself to the #**Coffee Chats** Zulip Channel if you'd like to start getting paired for daily coffee chats!
 
-It's really simple to get paired - just subscribe to the Zulip channel [Coffee Chats](https://recurse.zulipchat.com/#narrow/stream/142655-Coffee-Chats). If you're in there at 10am on any given day, we'll pair you up with someone new (expect the message at 10:30am each day). If you're sick that day and forget to remove yourself, don't worry! You can just meet with the person you paired with once you're back.
+Hi everyone! From tomorrow morning, we'll be kicking off coffee chat pairings (Mon-Thur). These are a great way to get matched with someone else at RC, to chat about anything and everything - from what you'll be doing at RC to what you're doing in life. Coffee itself isn't required - it could be tea, or snacks, or just a walk - and you don't even have to leave the building if you just want to catch up in the kitchen or somewhere else on the 4th floor.
+
+It's really simple to get paired - just subscribe to the Zulip channel #**Coffee Chats**. If you're in there at 10am on any given day, we'll pair you up with someone new (expect the message at 10:30am each day). If you're sick that day and forget to remove yourself, don't worry! You can just meet with the person you paired with once you're back.
 
 Feel free to add or remove yourself at any point, (just try to do so before 10am if you don't want to have coffee that day). Thanks and happy chatting!
 
