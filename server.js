@@ -156,7 +156,7 @@ const matchEmails = async ({ emails }) => {
       .filter(match => match.email1 === currentEmail || match.email2 === currentEmail) // filter to current email's matches
       .sort((a, b) => Number(new Date(a.date)) - Number(new Date(b.date))) // sort oldest to newest, so if there is a conflict we can rematch with oldest first
       .map(match => (match.email1 === currentEmail ? match.email2 : match.email1)) // extract only the other person's email out of the results (drop currentEmail and date)
-      .filter(email => emails.includes(email)) // remove past matches who are not looking for a match today
+      .filter(email => unmatchedEmails.includes(email)) // remove past matches who are not looking for a match today or who already got matched
       .filter((value, index, self) => self.indexOf(value) === index); // uniq emails // TODO: this should be a reduce that adds a match count to every email so we can factor that into matches
     
     const availableEmails = unmatchedEmails.filter(
@@ -296,7 +296,7 @@ const listener = app.listen(process.env.PORT, function() {
 });
 
 const testDB = () => {
-  db.all('SELECT * FROM users', (err, rows) => {console.log(rows)})
+  db.all('SELECT * FROM matches WHERE email1 = "nekanek@protonmail.com" OR email2="nekanek@protonmail.com"', (err, rows) => {console.log(rows)})
 }
 const testMatches = async () => {
   const zulipAPI = await zulip(zulipConfig);
