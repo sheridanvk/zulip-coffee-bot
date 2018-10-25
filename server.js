@@ -296,7 +296,7 @@ const listener = app.listen(process.env.PORT, function() {
 });
 
 const testDB = () => {
-  db.all('SELECT * FROM matches WHERE email1 = "nekanek@protonmail.com" OR email2="nekanek@protonmail.com"', (err, rows) => {console.log(rows)})
+  db.all('SELECT * FROM matches WHERE email1 = "test@test.com" OR email2="test@test.com"', (err, rows) => {console.log(rows)})
 }
 const testMatches = async () => {
   const zulipAPI = await zulip(zulipConfig);
